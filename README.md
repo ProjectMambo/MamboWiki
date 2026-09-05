@@ -120,7 +120,7 @@ npm run deploy -- --dry-run
 
 ## Generated and retained files
 
-`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` is synchronized source content and is committed so the repository and CI receive one self-contained documentation snapshot. The site-owned social preview and Project Mambo icon under `public/` remain tracked; MamboFont is bundled by the pinned MamboSite default-theme package.
+`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` and the branding sources under `docs/_assets/` are synchronized and committed so the repository and CI receive one self-contained snapshot. MamboSite publishes the icon and social preview under `public/mambo/assets/`; the root `public/` copies remain compatibility mirrors. MamboFont is bundled by the pinned MamboSite default-theme package.
 
 `CNAME` is retained while the custom domain remains configured in GitHub Pages, even though the custom Actions artifact does not depend on that file.
 

@@ -12,15 +12,24 @@ import { runtime, theme, themeStylesheetHref } from "../mambo/runtime";
 const title = runtime.store.manifest.site.title;
 const description = runtime.store.entryPage.description ?? "";
 const siteUrl = new URL(runtime.store.manifest.site.url!);
+const assetRoot = prefixBasePath(
+  "/mambo/assets",
+  runtime.store.manifest.site.basePath,
+);
 const socialImage = new URL(
-  `${runtime.store.manifest.site.basePath}/og.png`,
+  `${assetRoot}/og.png`,
   siteUrl,
 ).toString();
-const icon = `${runtime.store.manifest.site.basePath}/icon.png`;
 
 export const metadata: Metadata = {
   ...siteMetadata(runtime),
-  icons: { icon, apple: icon },
+  icons: {
+    icon: [
+      { url: `${assetRoot}/icon.svg`, type: "image/svg+xml" },
+      { url: `${assetRoot}/icon.png`, type: "image/png", sizes: "512x512" },
+    ],
+    apple: `${assetRoot}/apple-icon.png`,
+  },
   openGraph: {
     title,
     description,
