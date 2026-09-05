@@ -20,9 +20,9 @@ MamboWiki is the documentation site for the eight Project Mambo repositories. It
 | Goal | Link |
 |---|---|
 | Read the canonical Wiki documentation | [projectmambo.org/mambowiki/](https://projectmambo.org/mambowiki/) |
-| Review the synchronized site entry | [docs/index.md](index.md) |
-| Synchronize canonical content | [Content workflow](_mounts/mambowiki/Content%20Workflow.md) |
-| Validate and deploy the site | [Build and deployment](_mounts/mambowiki/Build%20and%20Deployment.md) |
+| Review the synchronized site entry | [docs/index.md](docs/index.md) |
+| Synchronize canonical content | [Content workflow](docs/_mounts/mambowiki/Content%20Workflow.md) |
+| Validate and deploy the site | [Build and deployment](docs/_mounts/mambowiki/Build%20and%20Deployment.md) |
 | Inspect route and build configuration | [mambo.toml](mambo.toml) |
 | Inspect the static deployment workflow | [.github/workflows/nextjs.yml](.github/workflows/nextjs.yml) |
 | Understand MamboSite | [ProjectMambo/MamboSite](https://github.com/ProjectMambo/MamboSite) |
