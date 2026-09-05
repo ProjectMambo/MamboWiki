@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Maintenance-Active-brightgreen?style=flat-square" alt="Maintenance status: active" />
   <img src="https://img.shields.io/github/last-commit/ProjectMambo/MamboWiki?style=flat-square&color=7a5fff" alt="Last commit" />
   <img src="https://img.shields.io/github/repo-size/ProjectMambo/MamboWiki?style=flat-square&color=yellow" alt="Repository size" />
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ProjectMambo/MamboWiki?style=flat-square&color=orange" alt="License" /></a>
+  <a href="../LICENSE"><img src="https://img.shields.io/github/license/ProjectMambo/MamboWiki?style=flat-square&color=orange" alt="License" /></a>
 </p>
 
 MamboWiki is the documentation site for the eight Project Mambo repositories. It assembles the same canonical project documentation exported to each repository, mounts every project at a stable route, and renders the result through MamboSite as a static Next.js site.
@@ -23,8 +23,8 @@ MamboWiki is the documentation site for the eight Project Mambo repositories. It
 | Review the synchronized site entry | [docs/index.md](index.md) |
 | Synchronize canonical content | [Content workflow](_mounts/mambowiki/Content%20Workflow.md) |
 | Validate and deploy the site | [Build and deployment](_mounts/mambowiki/Build%20and%20Deployment.md) |
-| Inspect route and build configuration | [mambo.toml](mambo.toml) |
-| Inspect the static deployment workflow | [.github/workflows/nextjs.yml](.github/workflows/nextjs.yml) |
+| Inspect route and build configuration | [mambo.toml](../mambo.toml) |
+| Inspect the static deployment workflow | [.github/workflows/nextjs.yml](../.github/workflows/nextjs.yml) |
 | Understand MamboSite | [ProjectMambo/MamboSite](https://github.com/ProjectMambo/MamboSite) |
 | Visit the target domain | [projectmambo.org](https://projectmambo.org) |
 
@@ -118,6 +118,8 @@ The committed workflow checks out MamboWiki and a pinned MamboSite revision, ins
 npm run deploy -- --dry-run
 ```
 
+The production footer formats the CI build instant in `Asia/Singapore`. Local reproducibility checks set `SOURCE_DATE_EPOCH=0`, which fixes both that timestamp and the generated collection-accent order.
+
 ## Generated and retained files
 
 `src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` and the branding sources under `docs/_assets/` are synchronized and committed so the repository and CI receive one self-contained snapshot. MamboSite publishes the icon and social preview under `public/mambo/assets/`; the root `public/` copies remain compatibility mirrors. MamboFont is bundled by the pinned MamboSite default-theme package.
@@ -130,4 +132,4 @@ This is Project Mambo's documentation site, so external pull requests are not cu
 
 ## License
 
-Distributed under the MIT License. See **[LICENSE](LICENSE)** for details.
+Distributed under the MIT License. See **[LICENSE](../LICENSE)** for details.

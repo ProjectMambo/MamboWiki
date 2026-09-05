@@ -24,11 +24,13 @@ Use `npm run lint` and `npm run typecheck` as separate source checks. The full b
 
 ## Reproducible local review
 
-MamboSite may seed presentation accents from the build environment. Set a fixed source epoch when comparing generated output or screenshots:
+MamboSite records the footer build time and seeds presentation accents from the build environment. Set a fixed source epoch when comparing generated output or screenshots:
 
 ```bash
 SOURCE_DATE_EPOCH=0 npm run build
 ```
+
+Production deploys omit `SOURCE_DATE_EPOCH`, so the footer formats the actual CI build instant in `Asia/Singapore`.
 
 Generated content and assets are ignored by Git. The committed inputs are the synchronized docs, configuration, shell, dependency manifests, and workflow.
 

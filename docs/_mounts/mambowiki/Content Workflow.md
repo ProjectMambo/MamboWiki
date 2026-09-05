@@ -59,6 +59,8 @@ git diff --check
 git status --short
 ```
 
+The fixed epoch makes both the visible footer timestamp and shuffled collection accents reproducible during review; production deployment uses its actual build time.
+
 Review the home page, every mounted project root, representative child pages, a deep MamboSite guide, internal links, and the not-found page before approving deployment.
 
 ## 5. Commit the synchronized snapshot

@@ -40,6 +40,12 @@ data:
 
 ::page{layout="home" width="wide" sidebar=false}
 
+:::footer
+
+::timestamp{timezone="Asia/Singapore" label="Last built"}
+
+:::
+
 ::hero{align="left" show-description=true}
 
 Project Mambo is a personal software and design ecosystem spanning an Arch Linux desktop, shared colours and fonts, a finance ledger, documentation standards, a static-site platform, a portfolio, and this documentation Wiki.
