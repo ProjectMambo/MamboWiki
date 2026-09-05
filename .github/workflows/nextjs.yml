@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ProjectMambo/MamboSite
-          ref: 502bca07da74ceeb151dfbb9db87cfd537ebc1c8
+          ref: a322dd7d7488fa8adcd5634091543cedc5de2e33
           path: MamboSite
 
       - name: Setup Rust
