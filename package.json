@@ -1,26 +1,35 @@
 {
-  "name": "mambosite",
+  "name": "mambowiki",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "runtime:build": "npm --prefix ../MamboSite run build:packages",
+    "content:check": "mbsite check",
+    "content:build": "mbsite build --content-only",
+    "predev": "npm run runtime:build && npm run content:build",
+    "dev": "next dev --webpack",
+    "build": "mbsite build",
+    "mambosite:render": "npm run runtime:build && next build",
+    "deploy": "mbsite deploy",
+    "preview": "python3 -m http.server 4173 --bind 127.0.0.1 --directory out",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mambosite/next": "file:../MamboSite/packages/next",
+    "@mambosite/react": "file:../MamboSite/packages/react",
+    "@mambosite/runtime": "file:../MamboSite/packages/runtime",
+    "@mambosite/theme-default": "file:../MamboSite/packages/theme-default",
     "next": "16.2.6",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
-    "tailwindcss": "^4",
     "typescript": "^5"
   }
 }
