@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/GitHub_Pages-222222?style=flat-square&logo=githubpages&logoColor=white" alt="GitHub Pages" />
   <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
   <img src="https://img.shields.io/badge/MamboSite-000000?style=flat-square&logoColor=white" alt="MamboSite" />
-  <img src="https://img.shields.io/badge/Deploy-Manual_review-yellow?style=flat-square" alt="Deployment status: manual review" />
+  <img src="https://img.shields.io/badge/Deploy-Live-brightgreen?style=flat-square" alt="Deployment status: live" />
 </p>
 <p align="left">
   <img src="https://img.shields.io/badge/Maintenance-Active-brightgreen?style=flat-square" alt="Maintenance status: active" />
@@ -13,15 +13,16 @@
   <a href="../LICENSE"><img src="https://img.shields.io/github/license/ProjectMambo/MamboWiki?style=flat-square&color=orange" alt="License" /></a>
 </p>
 
-MamboWiki is the documentation site for the seven Project Mambo repositories. It assembles the same canonical project documentation exported to each repository, mounts every project at a stable route, and renders the result through MamboSite as a static Next.js site.
-
-The MamboSite migration builds and exports successfully locally and is being held for manual review. Do not treat the current branch as deployed until the reviewed commits are pushed.
+MamboWiki is the documentation site for the eight Project Mambo repositories. It assembles the same canonical project documentation exported to each repository, mounts every project at a stable route, and renders the result through MamboSite as a static Next.js site.
 
 ## Start here
 
 | Goal | Link |
 |---|---|
+| Read the canonical Wiki documentation | [projectmambo.org/mambowiki/](https://projectmambo.org/mambowiki/) |
 | Review the synchronized site entry | [docs/index.md](index.md) |
+| Synchronize canonical content | [Content workflow](_mounts/mambowiki/Content%20Workflow.md) |
+| Validate and deploy the site | [Build and deployment](_mounts/mambowiki/Build%20and%20Deployment.md) |
 | Inspect route and build configuration | [mambo.toml](../mambo.toml) |
 | Inspect the static deployment workflow | [.github/workflows/nextjs.yml](../.github/workflows/nextjs.yml) |
 | Understand MamboSite | [ProjectMambo/MamboSite](https://github.com/ProjectMambo/MamboSite) |
@@ -33,6 +34,7 @@ The MamboSite migration builds and exports successfully locally and is being hel
 |---|---|
 | `/` | Wiki-owned ecosystem landing page |
 | `/mambocolour/` | Canonical MamboColour documentation |
+| `/mambodocs/` | Canonical MamboDocs standards |
 | `/mambodot/` | Canonical MamboDot documentation |
 | `/mambofinance/` | Canonical MamboFinance documentation |
 | `/mambofolio/` | Canonical MamboFolio documentation |
@@ -49,10 +51,11 @@ canonical vault project docs + Wiki site entry
     -> sync_docs.js
     -> README.md + docs/index.md + docs/_mounts/
     -> MamboSite Rust compiler
-    -> generated TypeScript + theme CSS
+    -> generated TypeScript + MamboColour-backed theme CSS
+    -> MamboSite-packaged MamboFont web fonts
     -> MamboSite React runtime and default theme
     -> Next.js static export in out/
-    -> GitHub Pages after manual approval
+    -> GitHub Pages
 ```
 
 MamboWiki owns the site entry, `mambo.toml`, its thin Next.js shell, package lock, workflow, and synchronized content snapshot. MamboSite owns parsing, validation, route assembly, shared React components, theme behavior, and the framework adapter.
@@ -109,9 +112,7 @@ Because MamboWiki mounts every project, run its sync after changing any canonica
 
 The committed workflow checks out MamboWiki and a pinned MamboSite revision, installs both dependency trees, runs one complete compiler and static build, uploads `out/`, and deploys it to GitHub Pages.
 
-For this migration, stop after a successful local build and conventional local commits. Do **not** push or run `npm run deploy` until manual review is complete.
-
-After approval, `npm run deploy` requires a clean `main` branch. It pushes when local commits are ahead or dispatches the configured workflow when the current commit is already remote. Preview that decision without external changes:
+`npm run deploy` requires a clean `main` branch. It pushes when local commits are ahead or dispatches the configured workflow when the current commit is already remote. Preview that decision without external changes:
 
 ```bash
 npm run deploy -- --dry-run
@@ -119,7 +120,7 @@ npm run deploy -- --dry-run
 
 ## Generated and retained files
 
-`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` is synchronized source content and is committed so the repository and CI receive one self-contained documentation snapshot. `public/og.png` is the site-owned social-preview image, and `public/icon.png` is the Project Mambo mark sourced from MamboFont; both remain tracked.
+`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` is synchronized source content and is committed so the repository and CI receive one self-contained documentation snapshot. The site-owned social preview and Project Mambo icon under `public/` remain tracked; MamboFont is bundled by the pinned MamboSite default-theme package.
 
 `CNAME` is retained while the custom domain remains configured in GitHub Pages, even though the custom Actions artifact does not depend on that file.
 

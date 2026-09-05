@@ -1,12 +1,12 @@
 ---
-title: MamboWiki Build and Deployment
-description: Validate, preview, and eventually deploy the MamboSite-powered Wiki through GitHub Pages.
+title: MamboWiki build and deployment
+description: Validate, preview, and deploy the MamboSite-powered Wiki through GitHub Pages.
 order: 30
 ---
 
 ::page{layout="docs" width="normal" sidebar=true}
 
-# MamboWiki Build and Deployment
+# MamboWiki build and deployment
 
 ## Local commands
 
@@ -54,13 +54,9 @@ GitHub Pages must use **GitHub Actions** as its publishing source. The custom do
 - Confirm the MamboSite pin matches the package/runtime behavior tested locally.
 - Confirm no private vault-only data appears in `README.md` or `docs/`.
 
-## Manual-review hold
+## Deploy
 
-The current MamboSite migration must remain local until its site and documentation are manually reviewed. A successful build is not permission to push it.
-
-## Deploy after approval
-
-From a clean reviewed `main` branch:
+From a clean `main` branch:
 
 ```bash
 npm run deploy

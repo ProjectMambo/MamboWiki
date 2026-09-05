@@ -1,12 +1,12 @@
 ---
-title: MamboWiki Content Workflow
+title: MamboWiki content workflow
 description: Author canonical project documentation, synchronize the Wiki snapshot, review it, and prepare a safe commit.
 order: 20
 ---
 
 ::page{layout="docs" width="normal" sidebar=true}
 
-# MamboWiki Content Workflow
+# MamboWiki content workflow
 
 ## 1. Edit the canonical source
 
@@ -56,11 +56,12 @@ npm run typecheck
 SOURCE_DATE_EPOCH=0 npm run build
 test -f out/index.html
 git diff --check
+git status --short
 ```
 
 Review the home page, every mounted project root, representative child pages, a deep MamboSite guide, internal links, and the not-found page before approving deployment.
 
-## 5. Commit for review
+## 5. Commit the synchronized snapshot
 
 Keep synchronized content separate from site-shell or workflow changes:
 
@@ -73,8 +74,6 @@ git commit -m "docs: refresh Project Mambo knowledge base"
 
 No diff requires no commit. Do not use an empty commit to trigger deployment.
 
-## 6. Respect the manual-review boundary
+## 6. Deploy
 
-For the current migration, stop after local validation and local conventional commits. Do not push and do not run the deploy command.
-
-After approval, use the deployment flow in [[Build and Deployment]]. MamboSite's [[Documentation Sync#After every sync|post-sync guide]] remains the source for the complete cross-repository policy.
+From a clean `main` branch, use the deployment flow in [[Build and Deployment#Deploy]]. MamboSite's [[Documentation Sync#After every sync|post-sync guide]] remains the source for the complete cross-repository policy.

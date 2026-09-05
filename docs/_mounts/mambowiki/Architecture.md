@@ -1,12 +1,12 @@
 ---
-title: MamboWiki Architecture
+title: MamboWiki architecture
 description: Source ownership, mount assembly, routes, rendering shell, and generated-file boundaries.
 order: 10
 ---
 
 ::page{layout="docs" width="normal" sidebar=true}
 
-# MamboWiki Architecture
+# MamboWiki architecture
 
 ## Source ownership
 
@@ -36,6 +36,7 @@ MamboSite excludes `_mounts/` from normal discovery. The explicit mount declarat
 | Public route | Materialized source |
 |---|---|
 | `/mambocolour/` | `_mounts/mambocolour/index.md` |
+| `/mambodocs/` | `_mounts/mambodocs/index.md` |
 | `/mambodot/` | `_mounts/mambodot/index.md` |
 | `/mambofinance/` | `_mounts/mambofinance/index.md` |
 | `/mambofolio/` | `_mounts/mambofolio/index.md` |
@@ -55,7 +56,7 @@ Next.js runs with static export, an empty base path for the custom domain, trail
 
 ## Theme
 
-MamboWiki initially uses MamboSite's built-in default theme. No copied theme or font bundle is needed to render the documentation. Add a small `mambo.theme.toml` only when the Wiki needs deliberate token overrides; do not fork the shared component implementation for cosmetic changes.
+MamboWiki inherits MamboSite's default structure, MamboColour-backed colour model, and packaged MamboFont faces. MamboSite's maintainer update wrapper is the only layer that invokes the design-provider commands; the Wiki's ordinary local and CI builds consume the pinned package files and do not require MamboColour, FontForge, or a MamboFont checkout.
 
 ## Generated-file policy
 

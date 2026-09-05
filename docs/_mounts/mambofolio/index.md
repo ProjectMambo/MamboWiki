@@ -1,7 +1,7 @@
 ---
 description: Solomon Koh's Markdown-first portfolio, built with MamboSite and deployed as a static website.
 title: MamboFolio
-order: 40
+order: 50
 tags:
   - web/GitHub Pages
   - web/MamboSite
