@@ -1,72 +1,132 @@
----
+# MamboWiki
 
----
-
-# MamboSite
 <p align="left">
   <img src="https://img.shields.io/badge/GitHub_Pages-222222?style=flat-square&logo=githubpages&logoColor=white" alt="GitHub Pages" />
   <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/Deploy-Live-brightgreen?style=flat-square" alt="Deploy Status" />
+  <img src="https://img.shields.io/badge/MamboSite-000000?style=flat-square&logoColor=white" alt="MamboSite" />
+  <img src="https://img.shields.io/badge/Deploy-Manual_review-yellow?style=flat-square" alt="Deployment status: manual review" />
 </p>
 <p align="left">
-  <img src="https://img.shields.io/badge/Maintenance-Active-brightgreen?style=flat-square" />
-  <img src="https://img.shields.io/github/last-commit/ProjectMambo/MamboSite?style=flat-square&color=7a5fff" />
-  <img src="https://img.shields.io/github/repo-size/ProjectMambo/MamboSite?style=flat-square&color=yellow" />
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/ProjectMambo/MamboSite?style=flat-square&color=orange" /></a>
+  <img src="https://img.shields.io/badge/Maintenance-Active-brightgreen?style=flat-square" alt="Maintenance status: active" />
+  <img src="https://img.shields.io/github/last-commit/ProjectMambo/MamboWiki?style=flat-square&color=7a5fff" alt="Last commit" />
+  <img src="https://img.shields.io/github/repo-size/ProjectMambo/MamboWiki?style=flat-square&color=yellow" alt="Repository size" />
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/ProjectMambo/MamboWiki?style=flat-square&color=orange" alt="License" /></a>
 </p>
 
-A responsive project wiki built with Next.js and Tailwind CSS.
+MamboWiki is the documentation site for the seven Project Mambo repositories. It assembles the same canonical project documentation exported to each repository, mounts every project at a stable route, and renders the result through MamboSite as a static Next.js site.
 
-## Features
-- Consistent **styling** driven by our centralized palette system.
-- Complete **responsiveness** optimized for modern browsers and mobile layouts.
-- Fast **loading** and static compilation powered by Next.js.
+The MamboSite migration builds and exports successfully locally and is being held for manual review. Do not treat the current branch as deployed until the reviewed commits are pushed.
 
-## Demo
-Live site available at: **[projectmambo.org](https://projectmambo.org)**
+## Start here
 
-## Getting Started
+| Goal | Link |
+|---|---|
+| Review the synchronized site entry | [docs/index.md](docs/index.md) |
+| Inspect route and build configuration | [mambo.toml](mambo.toml) |
+| Inspect the static deployment workflow | [.github/workflows/nextjs.yml](.github/workflows/nextjs.yml) |
+| Understand MamboSite | [ProjectMambo/MamboSite](https://github.com/ProjectMambo/MamboSite) |
+| Visit the target domain | [projectmambo.org](https://projectmambo.org) |
+
+## Information architecture
+
+| Route | Source |
+|---|---|
+| `/` | Wiki-owned ecosystem landing page |
+| `/mambocolour/` | Canonical MamboColour documentation |
+| `/mambodot/` | Canonical MamboDot documentation |
+| `/mambofinance/` | Canonical MamboFinance documentation |
+| `/mambofolio/` | Canonical MamboFolio documentation |
+| `/mambofont/` | Canonical MamboFont documentation |
+| `/mambosite/` | Canonical MamboSite documentation |
+| `/mambowiki/` | Canonical MamboWiki documentation |
+
+The root page declares these mounts explicitly. `sync_docs.js` materializes each source beneath the generated `docs/_mounts/` namespace and rewrites the exported mount paths; MamboSite publishes them only at their configured public routes.
+
+## Architecture
+
+```text
+canonical vault project docs + Wiki site entry
+    -> sync_docs.js
+    -> README.md + docs/index.md + docs/_mounts/
+    -> MamboSite Rust compiler
+    -> generated TypeScript + theme CSS
+    -> MamboSite React runtime and default theme
+    -> Next.js static export in out/
+    -> GitHub Pages after manual approval
+```
+
+MamboWiki owns the site entry, `mambo.toml`, its thin Next.js shell, package lock, workflow, and synchronized content snapshot. MamboSite owns parsing, validation, route assembly, shared React components, theme behavior, and the framework adapter.
+
+## Local setup
 
 ### Prerequisites
-Before running or building the project locally, ensure you have the following installed on your system:
- - **[Node.js](https://nodejs.org/)** - The JavaScript runtime env *(v18+ recommended)*.
- - **[npm](https://www.npmjs.com/)** or **[pnpm](https://pnpm.io/)** - The package manager to handle project dependencies.
- - **[Git](https://git-scm.com/)** - Version control system used to clone and manage this repository.
- - **[ProjectMambo/MamboColour](https://github.com/ProjectMambo/MamboColour)** - The centralized color palette layout configuration dependency.
 
-### Quick Start
-Clone the repository
+- Node.js 20 or later and npm.
+- Rust 1.95.0 or later.
+- Git and a sibling checkout of MamboSite.
+- Python 3 only for the optional static preview command.
+
+Clone the repositories beside each other, build MamboSite, install its command wrapper, then install MamboWiki:
+
 ```bash
-git clone https://github.com/ProjectMambo/MamboSite
-```
-
-### Install Prerequisites
-
-#### Install project dependencies
-Navigate into the root directory and install the Node modules:
-```bash
-npm install
-```
-
-#### Running Locally
-Launch the local development server to preview your changes:
-```bash
+git clone https://github.com/ProjectMambo/MamboSite.git
+git clone https://github.com/ProjectMambo/MamboWiki.git
+cd MamboSite
+npm ci
+npm run build:packages
+./script/install.sh
+cd ../MamboWiki
+npm ci
+npm run content:check
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser to view the site.
 
-### Quick Build
-To compile the static production build manually:
+## Commands
+
+| Command | Purpose |
+|---|---|
+| `npm run runtime:build` | Build the sibling MamboSite web packages. |
+| `npm run content:check` | Validate all physical and mounted Markdown without writing output. |
+| `npm run content:build` | Generate content, theme data, and managed assets without running Next.js. |
+| `npm run dev` | Regenerate content and start the local Next.js development server. |
+| `npm run build` | Run the complete MamboSite and Next.js static build into `out/`. |
+| `npm run preview` | Serve `out/` at `http://127.0.0.1:4173`. |
+| `npm run lint` | Run ESLint. |
+| `npm run typecheck` | Run TypeScript without emitting files. |
+| `npm run deploy` | Build, push committed work when needed, and trigger GitHub Pages. |
+
+## Canonical content workflow
+
+Project docs are authored in the Project Mambo Obsidian vault, not directly in this repository's generated `docs/` snapshot. From the vault root:
+
 ```bash
-npm run build
+node Scripts/sync_docs.js --sync MamboWiki
 ```
 
-## Deployment
-This project is configured for automated static deployment. Any changes pushed directly to the main branch will automatically trigger GitHub Actions to build and deploy the production artifacts to **GitHub Pages**.
+Because MamboWiki mounts every project, run its sync after changing any canonical project documentation. Review the complete replacement, validate, build, and commit it before deployment. See MamboSite's Documentation Sync guide for the cross-repository workflow.
 
-## Issues & Feedback
-Since this is our personal wiki, we are not looking for external pull requests. However, if you spot a bug or rendering issue, feel free to open an **Issue** to let me know!
+## Deployment
+
+The committed workflow checks out MamboWiki and a pinned MamboSite revision, installs both dependency trees, runs one complete compiler and static build, uploads `out/`, and deploys it to GitHub Pages.
+
+For this migration, stop after a successful local build and conventional local commits. Do **not** push or run `npm run deploy` until manual review is complete.
+
+After approval, `npm run deploy` requires a clean `main` branch. It pushes when local commits are ahead or dispatches the configured workflow when the current commit is already remote. Preview that decision without external changes:
+
+```bash
+npm run deploy -- --dry-run
+```
+
+## Generated and retained files
+
+`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` is synchronized source content and is committed so the repository and CI receive one self-contained documentation snapshot. `public/og.png` is the site-owned social-preview image and remains tracked.
+
+`CNAME` is retained while the custom domain remains configured in GitHub Pages, even though the custom Actions artifact does not depend on that file.
+
+## Issues and feedback
+
+This is Project Mambo's documentation site, so external pull requests are not currently requested. Report incorrect project content to the repository that owns it; report wiki assembly or rendering issues here.
 
 ## License
-Distributed under the MIT License. See **[LICENSE](LICENSE)** for more information.
+
+Distributed under the MIT License. See **[LICENSE](LICENSE)** for details.
