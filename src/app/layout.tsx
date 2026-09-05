@@ -16,9 +16,11 @@ const socialImage = new URL(
   `${runtime.store.manifest.site.basePath}/og.png`,
   siteUrl,
 ).toString();
+const icon = `${runtime.store.manifest.site.basePath}/icon.png`;
 
 export const metadata: Metadata = {
   ...siteMetadata(runtime),
+  icons: { icon, apple: icon },
   openGraph: {
     title,
     description,

@@ -119,7 +119,7 @@ npm run deploy -- --dry-run
 
 ## Generated and retained files
 
-`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` is synchronized source content and is committed so the repository and CI receive one self-contained documentation snapshot. `public/og.png` is the site-owned social-preview image and remains tracked.
+`src/generated/mambo/`, `public/mambo/`, `.next/`, and `out/` are build output and remain untracked. `docs/_mounts/` is synchronized source content and is committed so the repository and CI receive one self-contained documentation snapshot. `public/og.png` is the site-owned social-preview image, and `public/icon.png` is the Project Mambo mark sourced from MamboFont; both remain tracked.
 
 `CNAME` is retained while the custom domain remains configured in GitHub Pages, even though the custom Actions artifact does not depend on that file.
 

@@ -49,7 +49,7 @@ The final mount is not recursive: the Wiki's site entry and its canonical projec
 
 MamboSite first parses, resolves, and validates the complete mounted content graph. It writes typed page and manifest modules under `src/generated/mambo/` and theme/content assets under `public/mambo/`.
 
-The repository's route shell contains one root page and one catch-all page. The root renders the configured entry; the catch-all generates every known non-root route at build time and rejects unknown paths. `MamboSiteFrame`, the default component registry, page metadata, theme bootstrap, and not-found presentation come from the sibling MamboSite packages. The site-owned `public/og.png` supplies the root Open Graph and X preview; documentation pages publish their own title and description without inheriting that generic image.
+The repository's route shell contains one root page and one catch-all page. The root renders the configured entry; the catch-all generates every known non-root route at build time and rejects unknown paths. `MamboSiteFrame`, the default component registry, page metadata, theme bootstrap, and not-found presentation come from the sibling MamboSite packages. The site-owned `public/og.png` supplies the root Open Graph and X preview, while `public/icon.png` reuses the Project Mambo mark from MamboFont. Documentation pages publish their own title and description without inheriting the generic social image.
 
 Next.js runs with static export, an empty base path for the custom domain, trailing slashes, and unoptimized images. The complete production artifact is `out/`.
 
