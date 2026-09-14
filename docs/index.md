@@ -14,6 +14,8 @@ mounts:
     source: "_mounts/mambofolio/index.md"
   - path: /mambofont
     source: "_mounts/mambofont/index.md"
+  - path: /mambomeme
+    source: "_mounts/mambomeme/index.md"
   - path: /mambosite
     source: "_mounts/mambosite/index.md"
   - path: /mambowiki
@@ -48,7 +50,7 @@ data:
 
 ::hero{align="left" show-description=true}
 
-Project Mambo is a personal software and design ecosystem spanning an Arch Linux desktop, shared colours and fonts, a finance ledger, documentation standards, a static-site platform, a portfolio, and this documentation Wiki.
+Project Mambo is a personal software and design ecosystem spanning an Arch Linux desktop, shared colours and fonts, a finance ledger, machine-learning meme search, documentation standards, a static-site platform, a portfolio, and this documentation Wiki.
 
 ## Projects
 

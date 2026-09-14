@@ -41,6 +41,7 @@ MamboSite excludes `_mounts/` from normal discovery. The explicit mount declarat
 | `/mambofinance/` | `_mounts/mambofinance/index.md` |
 | `/mambofolio/` | `_mounts/mambofolio/index.md` |
 | `/mambofont/` | `_mounts/mambofont/index.md` |
+| `/mambomeme/` | `_mounts/mambomeme/index.md` |
 | `/mambosite/` | `_mounts/mambosite/index.md` |
 | `/mambowiki/` | `_mounts/mambowiki/index.md` |
 

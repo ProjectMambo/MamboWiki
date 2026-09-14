@@ -14,7 +14,7 @@ data:
 
 ::meta{show=["period","description","wikiUrl","githubUrl"] style="stack" empty="hide"}
 
-MamboWiki assembles the eight Project Mambo documentation trees into one static website. It uses explicit MamboSite mounts so each repository keeps one canonical set of docs while the Wiki publishes the same snapshot at a stable route.
+MamboWiki assembles the nine Project Mambo documentation trees into one static website. It uses explicit MamboSite mounts so each repository keeps one canonical set of docs while the Wiki publishes the same snapshot at a stable route.
 
 ## Responsibilities
 
@@ -36,4 +36,4 @@ MamboWiki assembles the eight Project Mambo documentation trees into one static 
 
 ## Current status
 
-The MamboSite-backed implementation and eight mounted project trees build and export locally and through the GitHub Pages workflow. The site inherits MamboSite's packaged MamboColour and MamboFont theme.
+The MamboSite-backed implementation and nine mounted project trees build and export locally and through the GitHub Pages workflow. The site inherits MamboSite's packaged MamboColour and MamboFont theme.
