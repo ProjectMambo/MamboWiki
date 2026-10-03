@@ -18,9 +18,9 @@ npm run build
 npm run preview
 ```
 
-`npm run check` is the complete repository gate: mounted-content validation, the strict MamboDocs contract, ESLint, TypeScript, a reproducible static build, artifact existence, and whitespace checks. It requires sibling MamboSite commit `43f861f6f4a0f1504753faf4b6113e2e75636f59` and MamboDocs commit `95e29a78e7e77e3dae6a6c8c410020351c4e0b6c`. `npm run dev` first builds the sibling MamboSite packages and regenerates content, then starts Next.js. `npm run build` runs one complete `mbsite build`, including the configured static renderer, and writes `out/`. `npm run preview` serves that completed directory at `http://127.0.0.1:4173`.
+`npm run check` is the complete repository gate: mounted-content validation, the strict MamboDocs contract, clean-clone package and generated-content preparation, ESLint, TypeScript, a reproducible static build, artifact existence, and whitespace checks. It requires sibling MamboSite commit `43f861f6f4a0f1504753faf4b6113e2e75636f59` and MamboDocs commit `95e29a78e7e77e3dae6a6c8c410020351c4e0b6c`. `npm run dev` first builds the sibling MamboSite packages and regenerates content, then starts Next.js. `npm run build` runs one complete `mbsite build`, including the configured static renderer, and writes `out/`. `npm run preview` serves that completed directory at `http://127.0.0.1:4173`.
 
-Next.js 16 does not run linting as part of `next build`, so the unified check keeps explicit ESLint and TypeScript stages before the build.
+Next.js 16 does not run linting as part of `next build`, so the unified check prepares clean-clone prerequisites, then keeps explicit ESLint and TypeScript stages before the reproducible production build.
 
 ## Reproducible local review
 
