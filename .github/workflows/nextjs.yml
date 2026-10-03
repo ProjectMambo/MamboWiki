@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ProjectMambo/MamboDocs
-          ref: 95e29a7bd5f64fd7b4b1416774157318490c6013
+          ref: 95e29a78e7e77e3dae6a6c8c410020351c4e0b6c
           path: MamboDocs
 
       - name: Install pinned Rust toolchain

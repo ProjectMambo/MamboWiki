@@ -75,4 +75,4 @@ CI regenerates all of them from the committed content snapshot and pinned depend
 
 ## Dependency boundary
 
-Until MamboSite packages are published, local development uses `file:../MamboSite/packages/...` dependencies and CI checks out MamboSite at exact commit `43f861f6f4a0f1504753faf4b6113e2e75636f59`. The compiler and four web packages must remain compatible; update the workflow pin and lockfile deliberately when upgrading. CI also checks out MamboDocs checker revision `95e29a7bd5f64fd7b4b1416774157318490c6013` so `npm run check` applies an immutable documentation contract.
+Until MamboSite packages are published, local development uses `file:../MamboSite/packages/...` dependencies and CI checks out MamboSite at exact commit `43f861f6f4a0f1504753faf4b6113e2e75636f59`. The compiler and four web packages must remain compatible; update the workflow pin and lockfile deliberately when upgrading. CI also checks out MamboDocs checker revision `95e29a78e7e77e3dae6a6c8c410020351c4e0b6c` so `npm run check` applies an immutable documentation contract.
