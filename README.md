@@ -13,7 +13,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/ProjectMambo/MamboWiki?style=flat-square&color=orange" alt="License" /></a>
 </p>
 
-MamboWiki is the documentation site for the nine Project Mambo repositories. It assembles the same canonical project documentation exported to each repository, mounts every project at a stable route, and renders the result through MamboSite as a static Next.js site.
+MamboWiki is the documentation site for the eleven Project Mambo repositories. It assembles the same canonical project documentation exported to each repository, mounts every project at a stable route, and renders the result through MamboSite as a static Next.js site.
 
 ## Start here
 
@@ -41,6 +41,8 @@ MamboWiki is the documentation site for the nine Project Mambo repositories. It 
 | `/mambofont/` | Canonical MamboFont documentation |
 | `/mambomeme/` | Canonical MamboMeme documentation |
 | `/mambosite/` | Canonical MamboSite documentation |
+| `/mambotools/` | Canonical MamboTools documentation |
+| `/mamboui/` | Canonical MamboUI documentation |
 | `/mambowiki/` | Canonical MamboWiki documentation |
 
 The root page declares these mounts explicitly. `sync_docs.js` materializes each source beneath the generated `docs/_mounts/` namespace and rewrites the exported mount paths; MamboSite publishes them only at their configured public routes.
