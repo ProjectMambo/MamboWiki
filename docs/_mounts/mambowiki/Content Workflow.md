@@ -50,18 +50,13 @@ Expected structural changes include the Wiki-owned `docs/index.md`, the complete
 From the MamboWiki repository:
 
 ```bash
-npm run content:check
-npm run lint
-npm run typecheck
-SOURCE_DATE_EPOCH=0 npm run build
-test -f out/index.html
-git diff --check
+npm run check
 git status --short
 ```
 
-The fixed epoch makes both the visible footer timestamp and shuffled collection accents reproducible during review; production deployment uses its actual build time.
+The unified check validates the complete mounted graph and strict MamboDocs repository contract, runs ESLint and TypeScript, builds with a fixed epoch, confirms `out/index.html`, and checks the diff. The fixed epoch makes both the visible footer timestamp and shuffled collection accents reproducible during review; production deployment rebuilds with its actual build time.
 
-Review the home page, every mounted project root, representative child pages, a deep MamboSite guide, internal links, and the not-found page before approving deployment.
+Review the home page, every mounted project root, representative child pages, a deep MamboSite guide, internal links, and the not-found page before approving deployment. Include narrow and wide viewports, keyboard-only navigation, visible focus, heading order, contrast, and reduced-motion behavior. Confirm no private vault-only material or unreviewed data collection appears in the synchronized snapshot.
 
 ## 5. Commit the synchronized snapshot
 
