@@ -93,7 +93,7 @@ git clone https://github.com/ProjectMambo/MamboSite.git
 git clone https://github.com/ProjectMambo/MamboWiki.git
 git clone https://github.com/ProjectMambo/MamboDocs.git
 git -C MamboSite checkout 43f861f6f4a0f1504753faf4b6113e2e75636f59
-git -C MamboDocs checkout 95e29a7bd5f64fd7b4b1416774157318490c6013
+git -C MamboDocs checkout 95e29a78e7e77e3dae6a6c8c410020351c4e0b6c
 cd MamboSite
 npm ci
 npm run build:packages
