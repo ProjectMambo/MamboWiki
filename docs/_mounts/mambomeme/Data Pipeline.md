@@ -8,25 +8,37 @@ order: 20
 
 # Data pipeline
 
-The data pipeline converts permitted source material into a versioned searchable corpus. Rust owns acquisition and the first untrusted-input boundary. Python performs resource-limited OCR and ML enrichment, then builds and publishes the search artifacts.
+The data pipeline converts permitted source material into a versioned searchable corpus. Rust owns acquisition and the first untrusted-input boundary. Python owns deterministic derived-index construction, validation, and publication; model enrichment is added only when a later phase needs it.
 
 ## Pipeline
 
+Phases 1 and 2 implement the corpus-build path; Phase 3 consumes the published result without changing it; Phase 4 adds one reviewed source in front of the same ingest boundary:
+
 ```text
-approved API or local manifest
-    -> Rust acquisition and parsing
-    -> raw assets + source/provenance records
-    -> canonical meme items
-    -> Python OCR, captions, tags, and embeddings
-    -> FTS index + vector matrix
-    -> validated immutable corpus snapshot
+finite reviewed Commons plan or cleared local JSONL manifest
+    -> bounded original media + versioned JSONL source envelope
+    -> Rust unresolved-manifest gate, bounded parsing, rights checks, decode, hashing, and deduplication
+    -> content-addressed media + canonical/provenance SQLite rows
+    -> Phase 1 Python deterministic fielded FTS5 build
+    -> Phase 2 Python TF-IDF/LSA experiment artifacts
+    -> integrity, coverage, and checksum validation
+    -> atomic active.json publication
+    -> read-only Python worker and Rust TUI
 ```
+
+Phase 2 adds a model-free TF-IDF/LSA representation and retrieval artifacts. Phase 4's Wikimedia Commons source does not need OCR or generated annotation: its reviewed plan supplies the searchable fields. Any later enrichment must earn its own measured need and reuse the Phase 1 corpus contract rather than replace it.
 
 Only one build stage writes at a time. The retrieval worker opens the published snapshot read-only.
 
+## Implementation status
+
+Phases 1 through 3 are complete. Phase 4 is in progress. It adds a finite reviewed Wikimedia Commons page-ID plan, a hardened sequential Rust acquisition command, version-2 tombstones, JPEG/PNG validation, active-snapshot invalidation, and controlled offline source tests.
+
+Phase 3's optional interaction log is deliberately outside the corpus and snapshot directories at `<data-dir>/feedback/interaction-events.jsonl`; it cannot change index artifacts or live rankings. Not implemented: OCR, generated captions, pretrained or image embeddings, or thumbnails. The current dense vectors are derived only from stored text fields with TF-IDF and truncated SVD.
+
 ## Source acceptance
 
-Start with a manually curated manifest and assets whose storage and use are known. Add one external source only after the local vertical slice works.
+Start with a manually curated manifest and assets whose storage and use are known. The first external source is a finite human-reviewed Wikimedia Commons plan, not a category crawler. Its complete contract is in [Wikimedia Commons source](Wikimedia%20Commons%20Source.md).
 
 Every source configuration must record:
 
@@ -40,7 +52,7 @@ Every source configuration must record:
 
 A URL exposed by an API is not proof that its contents may be copied or redistributed. Rights-incomplete items are recorded and quarantined, never published.
 
-Potential sources must be evaluated individually. Useful starting points include the [Wikimedia Commons API](https://commons.wikimedia.org/wiki/Commons:API) and [Openverse API](https://docs.openverse.org/), but every imported item still needs its own licence and attribution evidence. Reddit, Imgflip, GIPHY, Tenor, and Know Your Meme have distinct API, storage, ranking, or automated-access restrictions; none is a default crawler target.
+Potential sources must be evaluated individually. Phase 4 approves only the [Wikimedia Commons API](https://commons.wikimedia.org/wiki/Commons:API), and every planned item still needs its own pinned licence and attribution evidence. Reddit, Openverse, Imgflip, GIPHY, Tenor, and Know Your Meme have distinct API, storage, ranking, or automated-access restrictions; none is implemented or a default crawler target.
 
 ## Data layers
 
@@ -54,40 +66,49 @@ These are layers of one corpus. Only canonical records are authoritative; the se
 
 ## Source envelope
 
-Each adapter maps input into the same bounded envelope without inventing missing source evidence:
+Each source integration maps input into the same bounded envelope without inventing missing source evidence:
 
 | Field | Contract |
 |---|---|
 | `schema_version` | Cross-language record version. |
 | `source`, `source_item_id` | Source name and stable ID; the pair is unique. |
 | `kind` | `text` or static `image` in v1. |
-| `source_url`, `media_url` | Original page and optional media location. |
+| `source_url`, `media_url`, `asset_path` | Original page, optional provider media URL, and Phase 1 path relative to the manifest directory. |
 | `fetched_at`, `source_updated_at` | Retrieval time and optional provider revision. |
 | `raw_payload_path` | Retained payload or null when retention is forbidden. |
 | `claimed_media_type` | Optional declaration; never trusted without inspection. |
-| `title`, `source_text`, `source_tags` | Original strings preserved without search normalization. |
+| `title`, `text`, `tags` | Original title, text-item content, and source tags preserved without search normalization. |
+| `language`, `safe`, `reviewed` | Required Phase 1 language and explicit safety/review classifications. |
 | `people`, `template` | Source-provided identity metadata, including names such as John Cena. |
 | `creator`, `licence`, `permission`, `attribution` | Rights evidence required by the source policy. |
 | `retention_policy`, `redistribution_policy` | What may be stored and shown. |
 
-Unknown optional source fields remain in the retained raw payload when policy permits. The canonical mapping records whether each derived value came from the source, a model, or human review.
+Phase 1 rejects unknown manifest fields instead of silently discarding them. Phase 4 retains the bounded Commons API response separately and maps only declared envelope fields. The canonical mapping records whether each value came from the source, a model, or human review.
+
+Schema version `2` adds one deliberately small deletion form. A tombstone is exactly `schema_version`, `source`, `source_item_id`, `source_url`, `fetched_at`, and `deleted: true`; content, rights, safety, and asset fields are forbidden. Ordinary version-1 and version-2 records keep the existing complete contract. This makes deletion explicit rather than overloading a missing or incomplete ordinary record.
 
 ## Rust trust-boundary parsing
 
-The ingester resolves every attempted item to an explicit outcome:
+### Phase 1 local boundary
+
+The local ingester resolves every attempted fixture item to an explicit outcome:
 
 1. Parse a bounded record and dispatch on `kind`; quarantine unknown kinds.
 2. Resolve local paths beneath a configured root without following an escape outside it.
-3. Allow remote requests only over `http` or `https` to source-policy allowlisted hosts.
-4. Resolve and reject private, loopback, link-local, and otherwise forbidden addresses, then connect to the validated address. Repeat after every redirect.
-5. Enforce request time, redirect, response-byte, and decoded-dimension limits. Decoder allocation limits are best-effort unless the process also has an operating-system memory limit.
-6. For images, compare HTTP metadata with magic-byte detection and a real decode. Reject unsupported or animated formats in v1.
-7. For text-only items, require bounded valid Unicode and do not run media checks.
-8. Require stable identity and all rights fields named by the source policy.
-9. Calculate a domain-separated SHA-256 digest while streaming media to a temporary file or over the original UTF-8 text.
-10. Atomically move accepted media into content-addressed storage and commit the database outcome before advancing the source cursor.
+3. Enforce record-byte and decoded-image dimension limits.
+4. For images, compare the declared type with magic-byte detection and bounded static PPM, JPEG, or PNG decoding; reject animation, malformed data, and dimensions over the configured limit.
+5. For text-only items, require bounded valid Unicode and do not run media checks.
+6. Require stable source identity and complete rights, retention, redistribution, safety, and review evidence.
+7. Calculate a domain-separated SHA-256 digest over the original UTF-8 text or media bytes.
+8. Persist the manifest-path gate, atomically place accepted media in content-addressed storage, sync every newly created directory link, and commit the complete manifest's item, provenance, outcome, and processing-run rows in one SQLite transaction.
 
-The first adapter can use one reused synchronous HTTP client. A rate-limited source does not justify an async runtime or generic adapter framework.
+No Phase 1 code accepts a URL as media input or performs a network request.
+
+### Phase 4 remote boundary
+
+The first approved external source extends the same outcome model. Production accepts only HTTPS requests to the fixed Commons API and original-media host/path, resolves and rejects private, loopback, link-local, multicast, unspecified, and other forbidden addresses, pins the validated addresses for connection, and repeats URL and address validation after every manually followed redirect. It disables ambient proxies and automatic redirects/retries, caps redirects and attempts at three, applies five-second connect and twenty-second request deadlines, and caps API and media bodies at 1 MiB and 16 MiB respectively.
+
+The command sends serial requests with a required contact `User-Agent`, MediaWiki `maxlag=5`, bounded `Retry-After` handling, and a durable plan-hash cursor. Use one reused synchronous HTTP client. A rate-limited source does not justify an async runtime or generic adapter framework.
 
 ## Outcomes and retries
 
@@ -98,26 +119,45 @@ The first adapter can use one reused synchronous HTTP client. A rate-limited sou
 | `duplicate` | Existing canonical content with new provenance | Attach the provenance record |
 | `retryable` | Timeout, rate limit, transient DNS failure, or provider `5xx` | Bounded backoff without advancing past the item |
 | `quarantined` | Invalid schema, forbidden target, MIME/decode failure, missing rights, or policy failure | Retain reason for review |
-| `deleted` | Provider deletion or permission revocation | Invalidate affected snapshots and rebuild |
+| `deleted` | Explicit provider deletion, reviewed-plan removal, or permission revocation | Detach provenance, invalidate affected snapshots, and rebuild |
 | `fatal_batch` | Schema mismatch, corrupt state, invalid configuration, or failed publication | Stop without advancing the cursor |
 
-A rerun of the fixed fixture must preserve canonical IDs, content checksums, and outcome counts without creating duplicate search items.
+A fatal error, read failure, database failure, or process interruption rolls back the whole manifest transaction, so no valid prefix can later become publishable. It also leaves an unresolved marker keyed to the canonical manifest path. Until that same path succeeds, a different manifest cannot ingest and Python cannot publish; this prevents unrelated work from reviving stale content after a failed rights change. The separate failed-run audit row records the attempted outcome counts without making its items visible. A rerun of the fixed fixture must preserve canonical IDs, content checksums, and outcome counts without creating duplicate search items.
+
+Commons acquisition has its own earlier durability boundary: each verified API payload, media file, and mapped record is atomically written and directory-synced before its plan cursor advances. The plan-removal reconciliation runs only after every remaining item completes, so an interrupted or partial scan cannot invent deletions. The resulting manifest still enters the whole-manifest SQLite transaction above.
 
 ## Canonical storage
 
-Ordered language-neutral SQL migrations define three initial entities:
+Ordered language-neutral SQL migrations define four initial entities:
 
 | Entity | Required values |
 |---|---|
+| `corpus_state` | Singleton unresolved-manifest identity used to fail closed across interruption and fatal batches |
 | `meme_item` | ID, kind, title, conditional text or asset URI, language, content identity, availability, safety/review state, people, template group, tags, OCR, caption, search description, and processing version |
 | `source_item` | Nullable meme-item ID, source identity and URLs, creator, rights and attribution, policies, payload path, fetch revision, outcome/reason, and deletion state |
 | `processing_run` | Stage, input/output versions, cursor, timestamps, outcome counts, tool/model versions, and error summary |
 
 Identical domain-separated content shares one `meme_item` while retaining every provenance row. Identical image bytes also share one media object. A perceptual hash proposes near-duplicate or template groups for review; it never deletes visually similar variants automatically.
 
+A tombstone detaches its `source_item` from the canonical item and marks the canonical item unavailable only when no other serving provenance remains. Replaying the same tombstone is state-idempotent. Any committed accepted, duplicate, deleted, or quarantined change that may alter serving provenance removes and directory-syncs `active.json`; publication must run again before a worker can serve.
+
 Searchable fields remain separate in canonical storage. Do not flatten title, people, template, tags, OCR, caption, and descriptions until building the derived search document; retrieval needs their identity and weights.
 
-## Python enrichment boundary
+## Python index build — Phases 1 and 2
+
+The builder remains local and model-free. It:
+
+1. opens the ingested candidate database and verifies the schema, SQLite integrity, cleared unresolved-manifest state, and latest completed successful ingestion run;
+2. selects only available, safe, reviewed items with complete serving provenance and removes every other item and provenance row from the serving snapshot;
+3. applies the versioned Unicode NFKC and whitespace-normalization function to retrieval copies while preserving original display values;
+4. creates fielded FTS5 rows from title, people, template, tags, source text, reviewed OCR, caption, and description;
+5. builds a deterministic TF-IDF matrix, truncates it to at most eight LSA dimensions, canonicalizes component signs, normalizes item vectors, and writes ordered IDs, vocabulary, IDF, components, and vectors;
+6. verifies serving-row, FTS, and dense-ID coverage, canonical content identity, bounded media checksums, shapes, finite values, norms, and artifact checksums;
+7. writes a complete candidate snapshot and atomically replaces `active.json` only after validation succeeds.
+
+It does not run OCR, create annotations, download a model, or answer queries. A failed candidate never replaces the active snapshot. LSA is stored even though the Phase 2 comparison rejected it as the default route; keeping the small experiment artifacts makes the negative result reproducible.
+
+## Later Python enrichment boundary
 
 Rust validation does not make a file trusted to a second decoder. Run Python enrichment without network access and with bounded dimensions, subprocess timeouts, temporary output paths, and operating-system CPU, memory, and file limits. A crash or limit breach quarantines the item, not the batch.
 
@@ -148,30 +188,31 @@ Human review is required for benchmark items. Generated annotations elsewhere re
 
 ## Derived artifacts
 
-Each embedding/index build manifest records:
+Every index-build manifest records the applicable values below. Phase 2 records the SQLite/FTS and LSA artifacts, canonical export, schema, normalization, builder, representation, and runtime values.
+
+Each index build manifest records:
 
 - dataset, schema, normalization, and search-document versions;
-- representation type such as `search_text` or future `image`;
-- model identifier, immutable revision, preprocessing, dimension, and licence;
-- SQLite, matrix, ordered-ID, thumbnail, and canonical-export checksums;
-- processing tools, environment, and completion time.
+- representation type, currently `fielded_fts5+tfidf_lsa`;
+- dense method and dimension, vocabulary and item counts, and NumPy version;
+- SQLite, matrix, ordered-ID, vocabulary, and canonical-export checksums;
+- builder, SQLite runtime, and compile options.
 
-The row at index `i` in `embeddings.npy` belongs to the JSON string on line `i + 1` of `item_ids.jsonl`. Publication rejects missing or duplicate IDs, dimension mismatch, non-finite values, unexpected norms, ineligible items, or checksum disagreement.
+The row at index `i` in `dense_vectors.npy` belongs to element `i` of `dense_ids.json`. `dense_vocab.json` aligns with `dense_idf.npy` and the columns of `dense_components.npy`. Worker startup rejects a missing or extra required artifact, unsupported contract version, missing or duplicate ID, dimension mismatch, non-finite value, unexpected norm, ineligible item, or checksum disagreement.
 
-Canonical content identity hashes a UTF-8 JSON Lines export ordered by item ID, with sorted keys and LF endings. It excludes timestamps and SQLite page layout. Artifact hashes separately protect the actual files.
+Canonical content identity hashes a UTF-8 JSON Lines export ordered by item ID, including deterministic serving provenance and rights fields, with sorted keys and LF endings. It excludes fetch timestamps and SQLite page layout. Artifact hashes separately protect the actual files.
 
 ## Atomic publication
 
 Python builds a complete candidate snapshot in a versioned staging directory. Before promotion it must:
 
-1. check SQLite integrity, migrations, runtime version, and required FTS support;
+1. check SQLite integrity, migrations, cleared unresolved-manifest state, the latest completed successful ingestion run, runtime version, and required FTS support;
 2. require rights, availability, and safety eligibility for every serving row;
-3. verify FTS coverage, thumbnail references, and item/vector alignment;
-4. run fixed smoke queries and the end-to-end fixture;
-5. write and verify every checksum;
-6. atomically replace the active-manifest pointer.
+3. verify FTS coverage and every artifact applicable to the phase, including thumbnail references and item/vector alignment once those artifacts exist;
+4. verify every checksum and the Phase 2 item/vector alignment, shape, finite-value, and norm invariants;
+5. sync the completed snapshot directory before atomically replacing and directory-syncing the active-manifest pointer.
 
-A failed build leaves the previous snapshot untouched. A deletion or permission revocation invalidates any active snapshot containing the item; v1 stops search, rebuilds without it, and resumes only after the replacement is published. This avoids maintaining a second mutable suppression system.
+A pre-replacement failure leaves the previous snapshot untouched. The pointer rename is the commit point; a following directory-sync failure is reported as “publication durability unknown” because the new pointer may already be visible and must not be described as rolled back. A deletion, rights drift, or serving-provenance change invalidates the active pointer; v1 stops search, rebuilds a serving snapshot without ineligible data, and resumes only after the replacement is published and workers restart. Permitted raw-layer retention is governed separately by the source policy. This avoids maintaining a second mutable suppression system.
 
 ## Pipeline measurements
 
@@ -179,11 +220,13 @@ Pipeline health is reported separately from search quality:
 
 - 100% of served items satisfy rights, provenance, safety, availability, and deletion checks;
 - 100% asset integrity and item/vector alignment in the published set;
-- at least 99.5% of otherwise eligible canonical items included in the current index;
+- 100% of otherwise eligible canonical items included in the current index;
 - required metadata completeness by field and source;
 - zero exact duplicate rows in the serving index;
 - quarantine, retry exhaustion, near-duplicate, and deletion-lag counts;
 - accepted items per second, p95 item time, total CPU time, and peak memory;
 - corpus size, SQLite size, vector size, and rebuild duration.
+
+The Commons report additionally records plan identity and scan freshness, outcome counts, retries, downloaded bytes, duration, sequential throughput, peak memory, and resume/reconciliation evidence. A deletion-lag observation is measured from the source timestamp visible to the integration through completed ingestion and publication; it is not a promise of real-time source monitoring.
 
 Rights or integrity failures block publication. Averaging them into a Technical Score would hide a broken corpus.
