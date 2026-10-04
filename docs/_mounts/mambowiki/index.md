@@ -24,9 +24,13 @@ MamboWiki assembles the nine Project Mambo documentation trees into one static w
 - Build a static Next.js export for GitHub Pages.
 - Publish the validated static artifact through the configured GitHub Pages workflow.
 
-## Documentation
+## Understand MamboWiki
 
-::children{view="list" sort="order" direction="asc" show=["title","description"]}
+::children{include=["[[Architecture]]"] view="list" sort="order" direction="asc" show=["title","description"]}
+
+## Maintain and publish the site
+
+::children{include=["[[Content Workflow]]","[[Build and Deployment]]"] view="list" sort="order" direction="asc" show=["title","description"]}
 
 ## Links
 

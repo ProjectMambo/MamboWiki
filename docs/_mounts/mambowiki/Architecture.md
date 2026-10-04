@@ -1,12 +1,12 @@
 ---
-title: MamboWiki architecture
+title: Architecture
 description: Source ownership, mount assembly, routes, rendering shell, and generated-file boundaries.
 order: 10
 ---
 
 ::page{layout="docs" width="normal" sidebar=true}
 
-# MamboWiki architecture
+# Architecture
 
 ## Source ownership
 

@@ -1,12 +1,12 @@
 ---
-title: MamboWiki content workflow
+title: Content workflow
 description: Author canonical project documentation, synchronize the Wiki snapshot, review it, and prepare a safe commit.
 order: 20
 ---
 
 ::page{layout="docs" width="normal" sidebar=true}
 
-# MamboWiki content workflow
+# Content workflow
 
 ## 1. Edit the canonical source
 

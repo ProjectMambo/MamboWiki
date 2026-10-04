@@ -1,12 +1,12 @@
 ---
-title: MamboWiki build and deployment
+title: Build and deployment
 description: Validate, preview, and deploy the MamboSite-powered Wiki through GitHub Pages.
 order: 30
 ---
 
 ::page{layout="docs" width="normal" sidebar=true}
 
-# MamboWiki build and deployment
+# Build and deployment
 
 ## Local commands
 
