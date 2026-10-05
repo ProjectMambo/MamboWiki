@@ -59,7 +59,7 @@ Next.js runs with static export, an empty base path for the custom domain, trail
 
 ## Theme
 
-MamboWiki inherits MamboSite's default structure, MamboColour-backed colour model, and packaged MamboFont faces. MamboSite's maintainer update wrapper is the only layer that invokes the design-provider commands; the Wiki's ordinary local and CI builds consume the pinned package files and do not require MamboColour, FontForge, or a MamboFont checkout.
+MamboWiki inherits MamboSite's default structure, MamboColour-backed colour model, and packaged MamboFont faces. MamboSite owns the semantic adapter and links MamboColour at an exact Rust revision; MamboWiki consumes the pinned MamboSite packages and never calls the palette API directly. Building MamboSite from source resolves that pinned Git dependency, while ordinary use of an installed `mbsite` does not require a separate MamboColour, MamboFont, or FontForge checkout.
 
 ## Generated-file policy
 
@@ -75,4 +75,4 @@ CI regenerates all of them from the committed content snapshot and pinned depend
 
 ## Dependency boundary
 
-Until MamboSite packages are published, local development uses `file:../MamboSite/packages/...` dependencies and CI checks out MamboSite at exact commit `43f861f6f4a0f1504753faf4b6113e2e75636f59`. The compiler and four web packages must remain compatible; update the workflow pin and lockfile deliberately when upgrading. CI also checks out MamboDocs checker revision `95e29a78e7e77e3dae6a6c8c410020351c4e0b6c` so `npm run check` applies an immutable documentation contract.
+Until MamboSite packages are published, local development uses `file:../MamboSite/packages/...` dependencies and CI checks out MamboSite at exact commit `39484c6f88df83b499e40b141e5ac9e6703ab1d1`. The compiler and four web packages must remain compatible; update the workflow pin and lockfile deliberately when upgrading. CI also checks out MamboDocs checker revision `60e83675bb86785000e5e93b3d68e1d08f67e707` so `npm run check` applies an immutable documentation contract.
