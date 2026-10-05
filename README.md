@@ -92,7 +92,7 @@ Clone the repositories beside each other, select the validated provider revision
 git clone https://github.com/ProjectMambo/MamboSite.git
 git clone https://github.com/ProjectMambo/MamboWiki.git
 git clone https://github.com/ProjectMambo/MamboDocs.git
-git -C MamboSite checkout 39484c6f88df83b499e40b141e5ac9e6703ab1d1
+git -C MamboSite checkout a8e1613cb9ea44cf6693b9826b8bd09e13b35be5
 git -C MamboDocs checkout 60e83675bb86785000e5e93b3d68e1d08f67e707
 cd MamboSite
 npm ci
