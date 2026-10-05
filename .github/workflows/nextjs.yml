@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ProjectMambo/MamboSite
-          ref: a8e1613cb9ea44cf6693b9826b8bd09e13b35be5
+          ref: 382ffbf6b8d0ccd29ac86654ea54d6649deffdf9
           path: MamboSite
 
       - name: Checkout MamboDocs
