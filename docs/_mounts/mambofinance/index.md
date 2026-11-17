@@ -1,6 +1,6 @@
 ---
 title: MamboFinance
-description: An experimental Rust and SQLite finance ledger with a Ratatui interface.
+description: A local-first finance design with MamboUI, complete CLI parity, and reviewable external-AI imports.
 order: 40
 ---
 
@@ -8,22 +8,22 @@ order: 40
 
 # MamboFinance
 
-MamboFinance explores a local-first finance ledger built from a tested SQLite library and a terminal interface. The domain layer is substantially implemented; the TUI is still a demo-backed prototype.
+MamboFinance is being rebuilt as a local-first ledger for transactions, transfers, budgets, overviews, statistics, and reviewable AI-assisted imports. It keeps finance rules and SQLite persistence deterministic while letting users choose an external AI to interpret bank and marketplace reports.
 
 ::button{label="Source code" href="https://github.com/ProjectMambo/MamboFinance" variant="secondary" external=true}
 
-## Current boundary
+## Current status
 
-- The library persists named users to `storage/<name>.db` or can run entirely in memory.
-- Transactions can reference currencies, groups, categories, and funds; paired categories support linked double entries.
-- Query operations support filtering, ordering, editing, and deletion in the library.
-- The current binary uses an in-memory `USER`, inserts demonstration data on every launch, and supports navigation and adding records.
-- Budgets and the TUI's advertised edit, delete, sort, and filter actions are not implemented yet.
+The obsolete library and in-memory terminal prototype have been removed. The repository is now a documentation and licence baseline with no executable application or supported database. Git history remains available, but the replacement intentionally starts with a new schema and interface contract.
+
+## Selected direction
+
+- One Rust package owns a shared application core and local SQLite ledger.
+- A thin terminal interface uses MamboUI; a non-interactive `mbfinance` CLI exposes every domain action with structured JSON.
+- Optional MCP or other tool adapters map to the same commands for external assistants.
+- Imports are staged, validated, reviewed, previewed, and committed atomically; AI proposals never bypass ledger rules.
+- Version 1 does not embed a model or retain raw reports by default.
 
 ## Documentation
 
 ::children{view="list" sort="order" direction="asc" show=["title","description"]}
-
-## Project status
-
-The `tui` branch is active development. Use it for evaluation only and do not rely on the current interface for durable financial data.

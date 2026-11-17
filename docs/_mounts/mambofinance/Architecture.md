@@ -1,6 +1,6 @@
 ---
 title: Architecture
-description: Workspace structure, SQLite data model, query layer, and current TUI boundary.
+description: The local ledger, shared command core, MamboUI and CLI adapters, and external-AI trust boundary.
 order: 10
 ---
 
@@ -8,65 +8,78 @@ order: 10
 
 # Architecture
 
-## Workspace
+## Decision
+
+MamboFinance will not embed a model in version 1. External AI systems are optional clients that extract and propose statement rows; MamboFinance owns deterministic validation, conflict detection, review state, and persistence. This keeps the application model-independent and avoids making a cloud model a hidden trust boundary for financial data.
+
+The replacement will be one Rust package with one application command layer and three thin adapters:
 
 ```text
-mambofinance-lib
-    -> domain values and validation
-    -> SQLite schema and operations
-    -> typed query/filter/order/update API
-
-mambofinance-tui
-    -> terminal lifecycle and event loop
-    -> UI and widget state
-    -> calls mambofinance-lib
+Human -> MamboUI TUI -----------\
+                                 -> application commands -> domain rules -> SQLite
+Automation -> mbfinance CLI ----/
+External AI -> optional tools --/
 ```
 
-The workspace uses Rust 2024 edition. `mambofinance-tui` depends on the sibling library by path; the library has no dependency on the interface.
+The CLI is the canonical automation contract. An MCP or other tool adapter maps typed calls to the same application commands; it is not a second implementation. The TUI has no privileged mutation path.
 
-## Storage model
+## Why the old design was reset
 
-`User::new(name)` opens `storage/<name>.db`, creates the directory when needed, enables SQLite foreign keys, and creates missing tables. A name must be one non-empty path component; absolute paths, separators, `.` and `..` are rejected. The `storage/` directory and selected database must be real directory/file entries rather than symbolic links. `User::new_in_memory(name)` applies the same schema to an in-memory connection.
+The old code provided a large bespoke query and widget framework around a terminal demo that always seeded an in-memory database and discarded changes at exit. It had no complete CLI, import workflow, source provenance, migration contract, durable application path, statistics, or usable budgets, and it duplicated components now owned by MamboUI.
 
-The schema contains:
+Its current-directory-relative storage and cascading reference-data deletes were unsafe foundations for real financial records. Tiny text limits, title-casing, and paired-category semantics also did not map cleanly to ordinary statements. Preserving that API and schema would cost more than rebuilding the small domain the product actually needs.
 
-- `transactions`, including an integer amount, date parts, optional description, foreign keys, and an optional linked-transaction ID.
-- `groups` for grouping ledger activity.
-- `categories`, with a checked single or paired variant.
-- `funds` for the account or store of value.
-- `currencies` referenced by transactions.
+## Layers
 
-UUID values are stored as SQLite blobs. Foreign keys cascade deletes to dependent transactions. Labels normalize names to title case and copy descriptions as supplied, while amount constructors accept any signed 64-bit integer. Date construction validates one-based month and day ranges, including leap-year boundaries.
+### Domain and application core
 
-There is no released schema-migration, backup, encryption, or recovery contract. Persistent callers must manage independent backups and must not treat a prototype database as the only copy of financial records.
+The core owns finance invariants and use cases without terminal, MCP, or rendering types. Each command accepts validated input, executes one transaction where mutation is involved, and returns the same structured result or stable error to every adapter.
 
-## Ledger operations
+| Concept | First contract |
+|---|---|
+| `Account` | A bank, card, cash, wallet, or marketplace balance with a currency and active/archive state |
+| `Category` | Optional classification used by transactions and budgets; referenced categories are archived or restricted rather than cascade-deleted |
+| `Transaction` | Signed integer minor units, ISO currency, date, payee, optional note/category, account, and source provenance |
+| `Transfer` | A link between two transactions, including different amounts or currencies, without inventing paired categories |
+| `Budget` | A category, date period, currency, and minor-unit limit |
+| `ImportBatch` | Source identity, fingerprint when available, statement metadata, lifecycle state, totals, and commit record |
+| `ImportRow` | Original row locator and evidence, normalized proposal, issues, decision, and resulting transaction link |
 
-The public `User` API creates and retrieves reference data, adds single or paired transactions, and exposes typed query objects. Query code supplies record-specific filtering and ordering while retaining a common wrapper for the UI.
+Overview balances, budget progress, statistics, and review counts are queries derived from the ledger. They are not duplicate stored aggregates.
 
-Edit and delete operations exist in the library. Category variant changes protect linked transactions unless the caller explicitly uses the force path. The force path unlinks affected transactions and updates the category variant within one SQLite transaction, so either both changes commit or both roll back.
+### Storage
 
-Budgets are not part of the active module tree. The empty budget placeholder does not provide a supported feature.
+SQLite is the local system of record. The application will use the platform-appropriate user data directory rather than the current working directory, enable foreign keys, and apply ordered transactionally recorded migrations. Money remains integer minor units and currency is explicit; version 1 does not perform exchange-rate conversion.
 
-## TUI state flow
+Reference data that is still in use cannot silently erase transactions. Multi-row imports and transfer creation commit atomically. Before the first durable release, the project must define backup/export, interrupted-migration recovery, database ownership, and supported downgrade behavior.
 
-```text
-Crossterm event
-    -> App update loop
-    -> UIState / active panel
-    -> sidebar, query table, or popup
-    -> UIEvent for a completed add form
-    -> User write + table refresh
-```
+Source provenance is retained with imported entries, but raw statements are not copied into the database by default. Logs, JSON output, errors, and test fixtures must not expose full reports, account numbers, or unrelated ledger history.
 
-Ratatui renders a sidebar, the selected query table, a contextual bottom bar, and an add popup. Completed popup fields are compiled into strings, validated, and handed to the record-specific library call. Malformed numeric/date fields and database validation failures remain in the form and appear in the bottom status bar instead of being coerced or panicking.
+### MamboUI terminal interface
 
-## Current prototype boundary
+The TUI will pin MamboUI revision `819b03fe77a39ee1bccefde4de9b9676eaa03134` until its `0.2.0` contract is released. It imports Ratatui through `mambo_ui::ratatui` and composes MamboUI's shell, panels, selection tables, status lines, help, empty states, and responsive layouts. Finance-specific screens, forms, charts, conflict evidence, and state transitions stay in MamboFinance.
 
-The binary creates `User::new_in_memory("USER")`, seeds currencies, funds, groups, categories, and transactions, and then starts the terminal loop. Nothing from that run is durable. Edit, delete, sort, and filter actions do not have key handlers and are not advertised as available.
+The first screens are Overview, Transactions, Budgets, and Imports. Rendering and input handling call application commands and do not contain validation or database policy.
 
-Before a durable release, the interface still needs explicit user/database selection, finished actions, migration/recovery policy, and an end-to-end persistence check.
+### CLI and tools
 
-## Quality gates
+`mbfinance` supports non-interactive operation and structured JSON input/output. Every domain query or mutation available in the TUI has a CLI equivalent; navigation, focus, theme, and help are presentation-only and need no command. Diagnostics remain separate from result output, errors use stable codes, and bulk or destructive operations have preview and explicit commit boundaries.
 
-The library's unit tests cover its current domain behavior, SQLite operations, relationships, and queries. Use the repository README's **Development checks** as the authoritative local sequence. The GitHub Actions workflow runs the same Cargo checks for `main`, `tui`, and pull requests targeting either branch.
+The optional AI-facing adapter exposes a bounded context and staged-import operations rather than unrestricted SQL or filesystem access. It cannot weaken validation, authorization, idempotency, confirmation, or atomicity.
+
+## Trust boundaries
+
+- The local user and MamboFinance process control the ledger database.
+- A user-selected AI host may see reports that the user uploads to it; that disclosure is outside MamboFinance and must remain explicit.
+- MamboFinance returns only the accounts, categories, configured mappings, schema, and issue details needed for the current import, not an unrestricted transaction history.
+- AI output is untrusted proposal data. It is validated like any other external input and never writes directly to ledger tables.
+- Unresolved or conflicting rows remain visible until a user or authorized client resolves or explicitly excludes them.
+
+## Delivery order
+
+1. Establish the domain, migrations, manual transaction path, JSON CLI contract, and focused checks.
+2. Add overview, budgets, statistics, backup/export, and the MamboUI interface over those commands.
+3. Add staged import, deterministic reconciliation, review, preview, and atomic commit.
+4. Add a thin MCP or equivalent adapter only when a real host integration is ready to exercise the same contract.
+
+The reset deliberately leaves no placeholder crates, plugin system, model abstraction, or cloud service.
