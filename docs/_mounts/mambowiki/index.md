@@ -26,7 +26,7 @@ MamboWiki assembles the nine Project Mambo documentation trees into one static w
 
 ## Understand MamboWiki
 
-::children{include=["[[Architecture]]"] view="list" sort="order" direction="asc" show=["title","description"]}
+::children{include=["[[Architecture]]","[[Development Plan]]"] view="list" sort="order" direction="asc" show=["title","description"]}
 
 ## Maintain and publish the site
 
