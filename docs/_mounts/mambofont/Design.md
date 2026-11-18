@@ -27,154 +27,67 @@ The font has one short, direct path from parameters to binaries:
 
 There is no SVG-to-font source pipeline and no cache. SVG appears only in the specimen's blueprint cards. Editing JSON and rebuilding is the complete source-of-truth workflow; no glyph-specific Python recipe module remains.
 
-## Config and editor architecture
+## Human-drawn source direction
 
-This architecture is being introduced in gated phases. Phases 1 through 3 provide `sources/font.json`, `sources/components.json`, a strict standard-library evaluator, and JSON recipes for `.notdef` plus every printable ASCII glyph. The set covers rectangles, bars, true and receiver-aware diagonals, explicit polygons, subtraction, reusable components, and both gap actions. Migration required exact normalized-outline parity with the approved Python baseline in every weight before that old recipe module was removed.
+The JSON blueprint system above remains the current implementation until an atomic source cutover, but it is superseded as the delivery direction. The ASCII pilot showed that procedural rules can reproduce metrics and enforce gap decisions, yet optical correction is slower and less direct than editing the final outlines.
 
-JSON now drives `compile`, `check`, and `specimen`, including the 67 contourless controls and spaces declared by the project. `mbfont edit` does not exist yet, so the generated specimen remains the current review surface until the editor gates in [Command reference](Commands.md) pass.
-
-### Architecture decisions
-
-- Strict JSON becomes the complete editable font source. JSON is native to Python and browsers, produces deterministic text diffs, and needs no YAML, TOML, or GUI serialization dependency.
-- The source is split by ownership rather than stored as one large document. `font.json` owns project-wide values and deliberate empty ranges, `components.json` owns reusable geometry, and one `glyphs/U+XXXX.json` file owns each drawn glyph. This lets the GUI save one glyph without rewriting the whole family and keeps Codex-generated additions reviewable. Identical empty controls are expanded from ranges instead of duplicated across 67 files.
-- Python remains the only configuration resolver, geometry engine, validator, and TTF/WOFF2 compiler. The browser never reimplements font rules and other repositories keep a headless command-line build.
-- The editor is a local browser application made from native HTML, CSS, JavaScript, and SVG, served by Python's standard library. A Rust GUI is deferred: while the compiler remains Python/FontForge, Rust would add a second runtime and an IPC boundary or duplicate the resolver without improving this 283-entry workload.
-- SVG is a precise interactive view, not an intermediate font format. The compiler writes normalized filled contours directly to the font backend.
-- Preview and final vertices are derived data. Only semantic guides, points, primitives, components, and rules are saved.
-
-Rust can be reconsidered if MamboFont later requires a separately packaged native desktop editor or if the compiler itself moves to Rust. Until then, a browser editor is smaller and uniquely verifies the WOFF2 result in its real rendering environment.
-
-### Target source layout
+The target source path is:
 
 ~~~text
-sources/
-  font.json             schema version, metadata, metrics, weights, guides, coverage
-  components.json       reusable frames, marks, accents, and other shared geometry
-  glyphs/
-    _notdef.json
-    U+0020.json
-    U+0021.json
-    ...
-  config.py             strict loading, reference resolution, and validation
-  model.py              generic filled-outline primitives and normalization
-editor/
-  index.html
-  app.js
-  style.css
-script/mbfont.py        compile, check, and edit commands
-tests/test_config.py    dependency-free JSON contract and guide-parity check
-tests/test_build.py     end-to-end outline, font, raster, and determinism check
+sources/MamboFont-Regular.sfd
+sources/MamboFont-Medium.sfd
+sources/MamboFont-SemiBold.sfd
+sources/MamboFont-Bold.sfd
+        |
+        v
+validate without changing contours
+        |
+        +--> TTF
+        +--> WOFF2
+        +--> specimen
 ~~~
 
-The loader treats the directory containing `font.json` as the project root. `font.json` names the component file and glyph directory, so `--config` can point at another project without relying on the repository's working directory.
+FontForge is the authoring interface. Its native SFD files own contours, components, anchors, guides, widths, and per-weight optical correction. MamboFont will not build a browser, Rust, native, or terminal editor unless later evidence identifies a specific workflow that FontForge cannot provide.
 
-### JSON project contract
+Each weight is an independent reviewed source. Regular and Bold may seed Medium and SemiBold through one explicit interpolation experiment, but any result must be saved and manually corrected. Normal builds never interpolate or derive one weight from another.
 
-Every JSON document carries `format` and `schema_version` fields. The first format version is intentionally closed: unknown fields, primitives, actions, and scalar forms are errors instead of silently ignored extensions. JSON object ordering never affects generated contours or glyph order.
+### Source boundary
 
-`font.json` owns:
+After cutover, `font.json` retains only family metadata, the weight-to-SFD mapping, required coverage, deliberate empty glyphs, and review sizes. It no longer contains glyph geometry. The JSON glyph recipes, components, evaluator, primitive model, and JSON-specific tests move together to `archive/v0.4-json-prototype/`.
 
-- family metadata, units per em, advance, ascent, descent, and vertical metrics;
-- the four weights and their nominal thicknesses;
-- the supported review sizes and default minimum gap;
-- named global horizontal and vertical guides;
-- the required Unicode coverage and deterministic glyph order;
-- paths to the components document and glyph directory.
+Generated TTF, WOFF2, SVG, HTML, and raster files remain derived artifacts. The four SFD files are the only active outline source. The archived `0.2.4` family and `0.4.0` pilot remain visual and recovery references rather than mandatory contour templates.
 
-Glyph filenames and map keys use uppercase `U+XXXX` code points so whitespace, escaping, and names cannot make the source ambiguous. Deliberately empty ranges create encoded, contourless glyphs with the family advance and appear in the future editor like other entries; an individual file is needed only if an empty entry later needs special metrics or metadata. A drawn glyph document owns:
+### Export boundary
 
-- its code point, production name, advance, and review state;
-- named local values and semantic points;
-- an ordered list of additive and subtractive shapes with stable IDs;
-- its explicit vulnerable-gap probes and fallback actions;
-- optional anchors and component or base-glyph references.
+The build opens each SFD, checks it, and exports the requested formats. It may set the requested version and deterministic serialization metadata, but it must not synthesize, interpolate, thicken, simplify, remove overlap, fill gaps, normalize away authored points, or save changes into the source.
 
-Reusable components use the same point and shape vocabulary with named parameters. Accented characters reference a base glyph and an accent component at declared anchors; bespoke characters such as `Æ`, `Œ`, `ß`, `Ð`, and `Þ` remain explicit glyph geometry. Component and glyph reference cycles are invalid.
+A malformed outline fails with its weight and glyph. The author fixes the SFD in FontForge. Point economy, contour direction, overlap removal, component placement, and optical gap decisions are source work rather than hidden compiler repairs.
 
-The scalar language stays data-only. A value is one of:
+The existing `compile`, `check`, and `specimen` commands keep their useful roles through the transition. The custom `mbfont edit` command and browser-editor plan are cancelled.
 
-1. A finite number such as `80`.
-2. A named reference such as `{ "ref": "guide.x.center" }`.
-3. An affine value such as `{ "constant": 20, "terms": { "guide.x.center": 1, "weight.thickness": -0.5 } }`.
-4. A complete `by_weight` map for a reviewed optical exception.
+### Validation contract
 
-References may address project metrics, review settings, global guides, the current weight, glyph-local values and points, or component parameters. The resolver evaluates them as an acyclic dependency graph. There are no expression strings, scripts, loops, arbitrary conditionals, Python calls, or `eval`. Geometry-specific mathematics stays inside the small tested primitive implementation.
+The human-drawn build continues to enforce objective contracts:
 
-Phase 2 resolves rectangles, horizontal and vertical bars, true diagonals, receiver-aware joined diagonals, and reusable component shapes. Later phases add the remaining deliberately narrow vocabulary only as converted glyphs require it:
+- exact cmap coverage and deliberate empty glyphs;
+- 500-unit advances, shared vertical metrics, family names, weight metadata, and licence metadata;
+- straight, on-curve outlines while the no-curves style contract remains active;
+- valid directions, no self-intersections, safe bounds, and no accidental overlaps or point contacts;
+- FontForge validation before and after export;
+- monospace classification, `fontlint`, and deterministic TTF and WOFF2 output;
+- selected ambiguity and small-size checks that catch lost identity without freezing every rejected pilot contour.
 
-- rectangle, horizontal bar, and vertical bar;
-- true level-capped diagonal and receiver-aware joined diagonal;
-- explicit polygon for an irreducible silhouette;
-- additive component and composed-glyph reference;
-- translation and horizontal or vertical mirroring.
+Human review owns optical quality. The specimen must show all four weights, the complete supported set, ambiguity groups, punctuation, accents, repeated dense glyphs, prose, and code-like text at 14, 16, 24, and display sizes.
 
-Every shape has a semantic ID and an `add` or `subtract` operation. Arbitrary transforms, curves, rotation, and scaling are excluded from the first schema. A feature is added only after a real glyph cannot be expressed by the existing vocabulary.
+### Transition gate
 
-### Config-driven gap rules
+Do not delete the active JSON path before four SFD baselines reproduce the current 161-entry cmap, 67 empty glyphs, advances, line metrics, metadata, and deterministic export behavior. At that gate, archive the procedural implementation and switch the commands in the same commit so the repository never has two active outline authorities.
 
-Gap decisions stay explicit and per glyph. A gap record names one or more semantic probes, a minimum clearance, and exactly one fallback. The compiler evaluates it independently in every weight:
+The [development plan](Development%20Plan.md) owns the dependency order, human redraw, extended coverage, compatibility, and release milestones.
 
-1. Build the unconditional source shapes and measure only the declared cross-sections.
-2. Preserve the geometry when every measured clearance reaches the minimum.
-3. If a probe is smaller, apply its configured `fill` patch or `widen` replacement once.
-4. Rebuild and measure the final normalized outline. `fill` must close the declared opening; `widen` must meet the threshold. Otherwise compilation fails.
+## Current procedural pilot details
 
-A fallback may add a named patch or replace named values supplied in that same rule. The Phase 2 evaluator permits one gap rule per glyph; multiple independent rules are deferred until a migrated glyph actually needs them. Nested gap rules and rule-dependent rules remain invalid. The compiler never guesses whether a small void is important, runs a global morphology pass, or searches for arbitrary nearest edges.
-
-This represents the approved pilot decisions directly: `A` and sub-threshold `M`, `W`, `m`, and `w` notches fill; the lower `g` aperture widens or remains at least the declared minimum. The GUI exposes the natural measurement, action, and resolved measurement for every weight.
-
-### Compiler boundary and pipeline
-
-The CLI and editor call one Python project API. Loading or saving a project, resolving one glyph for interactive feedback, compiling a preview, and compiling final fonts all pass through the same validator and primitive implementation.
-
-~~~text
-load JSON project
-  -> validate format, schema version, coverage, IDs, and references
-  -> resolve guides, points, and values for one weight
-  -> expand components and generic filled primitives
-  -> measure and apply declared gap fallbacks once
-  -> union ink and subtract cuts
-  -> snap to integer font units
-  -> remove exact duplicate and same-direction collinear vertices
-  -> normalize direction, contour order, and start points
-  -> validate bounds, topology, gaps, thickness contracts, and readability gates
-  -> write and reopen deterministic TTF and WOFF2
-~~~
-
-Optimization is exact and shape-preserving. It removes duplicate and truly collinear vertices but never uses tolerance simplification or generic smoothing. Short non-collinear edges, receiver teeth, slivers, self-intersections, and unintended point contacts are reported against the source shape that produced them. They are fixed by a joined primitive, point, or explicit polygon rather than silently deleting a corner and changing the glyph.
-
-### Browser editor contract
-
-`mbfont edit` will bind an ephemeral port on `127.0.0.1`, create a per-run mutation token, serve only fixed editor assets and project endpoints, then open the local page. The standard-library server is development tooling, never a network service. It exposes no arbitrary path, shell command, or repository API.
-
-The editor has four working areas:
-
-- A searchable glyph grid with Unicode, name, review state, changed state, and validation warnings.
-- A zoomable SVG canvas with toggles for bounds, reference lines, named points, source shapes, final normalized contours, and final vertices. Final contours are the default so raw overlap points cannot be mistaken for excess TTF points.
-- An inspector for exact coordinates, references and offsets, snapping, primitive endpoints and thickness, component placement, shape order, gap probes, minimums, and `fill` or `widen` alternatives.
-- An all-weight review area with actual-size 14-, 16-, and 24-pixel samples, gap outcomes, ambiguity strings, and a free typable text box.
-
-Dragging updates the selected semantic point or guide, never an optimized TTF vertex. The page sends a debounced working patch to Python; Python returns resolved source shapes, final contours, gap diagnostics, and errors for all four weights. Undo, redo, and reset live in the browser session. Invalid working state is visible but cannot overwrite the project.
-
-After a valid working change settles, Python compiles a temporary WOFF2 preview keyed by a content revision. JavaScript loads it as a uniquely named `FontFace`, adds it to `document.fonts`, switches the typable box to that family, and releases the old preview. The newest config therefore appears without a page reload. The last valid preview remains visible while an invalid edit is corrected.
-
-Save first resolves and validates the complete project in all four weights, writes a same-directory temporary file with stable two-space formatting and key order, then uses an atomic replace for only the selected JSON document. Build calls the normal compiler and writes the requested TTF/WOFF2 destination. Neither action commits files or writes release assets.
-
-The first editor version does not need React, a UI framework, WebSockets, a database, or a second geometry engine. Fixed HTTP endpoints for editor state, preview, save, build, and revisioned preview-font bytes are sufficient.
-
-### Target validation contract
-
-Before a project can save or build, validation rejects:
-
-- unknown keys or unsupported schema versions;
-- malformed, duplicate, missing, or extra code points relative to declared coverage;
-- duplicate shape/point IDs, missing references, dependency cycles, and component cycles;
-- non-finite numbers, incomplete `by_weight` maps, invalid thicknesses, and out-of-bounds geometry;
-- unsupported operations, conflicting gap branches, an incomplete fill, or a widened gap below its minimum;
-- open or self-intersecting contours, zero-area edges, unintended contacts, and short popup edges;
-- duplicate or removable collinear final vertices and nondeterministic contour or glyph ordering.
-
-The end-to-end build still checks exact advances and cmap coverage, consistent line metrics and metadata, all four weights, raster distinction at the supported review sizes, valid reopened TTF/WOFF2 files, and byte-identical repeated builds. GUI save round-trips must also prove stable JSON output, and a rejected edit must leave the last saved file unchanged. Headless `compile` and `check` tests run without starting or importing the editor.
+Until the transition gate passes, the existing JSON files, gap rules, compiler pipeline, tests, and commands remain the factual `0.4.0` pilot behavior described below. They are maintained only to support the source cutover and are not a platform for new editor work.
 
 ## Coordinate and weight model
 
@@ -281,7 +194,7 @@ Fourteen ppem is the pilot's geometry and readability review floor, not a promis
 
 The end-to-end check enforces:
 
-- The current 161-code-point map: all printable ASCII plus 67 deliberate empty controls and spaces, fixed advances, bounds, line metrics, metadata, and valid TTF/WOFF2 files.
+- The current 161-code-point map: 94 drawn ASCII glyphs plus 67 deliberate empty controls and spaces, fixed advances, bounds, line metrics, metadata, and valid TTF/WOFF2 files.
 - Valid blueprint fields and declared gap outcomes at every weight, including zero clearance for a triggered fill.
 - Direct filled outlines, safe bounds, all configured empty glyphs remaining contourless, and no active stroke expansion.
 - Integer, all-on-curve output with no duplicate or removable collinear points.
@@ -301,6 +214,6 @@ The milestone target contains 283 encoded entries:
 
 C0 controls U+0000–U+001F, space U+0020, DEL and C1 controls U+007F–U+009F, and no-break space U+00A0 are encoded with the 500-unit family advance and no contours. This includes Unicode control characters at U+0080–U+009F as empty glyphs while the printable Windows-1252 characters for those byte positions use their actual Unicode code points such as U+20AC. Undefined Windows-1252 byte positions do not create extra mappings beyond their corresponding empty Unicode C1 controls.
 
-The 67 empty entries leave 216 drawn glyphs. The current compiler contains all 94 drawn ASCII glyphs plus every declared empty entry, for 161 encoded glyphs in total. The JSON manifest already declares all 283 target entries, leaving 122 extended drawn glyphs pending. Latin-1 and the printable Windows-1252 geometry expands only after this JSON-driven ASCII baseline is reviewed.
+The 67 empty entries leave 216 drawn glyphs. The current compiler contains all 94 drawn ASCII glyphs plus every declared empty entry, for 161 encoded glyphs in total. The JSON manifest already declares all 283 target entries, leaving 122 extended drawn glyphs pending. Latin-1 and printable Windows-1252 drawing begins after the SFD cutover and human ASCII approval defined by the development plan.
 
 A usable base-font release requires all 283 target entries, all four weights, an explicit gap decision for every vulnerable drawn glyph, passing structural/deterministic/raster checks, visual approval at the supported review sizes, approved final family metadata and binaries, and no unresolved base-font design blockers. Only then are release files and a tag created and downstream artifact consumers migrated. Documentation may publish before that gate. Icon work remains a separate later milestone.

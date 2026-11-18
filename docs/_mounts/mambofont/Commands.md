@@ -119,62 +119,37 @@ git diff --check
 git status --short
 ~~~
 
-The tests assert all 95 printable ASCII glyphs, all 67 declared empty controls and spaces, declared fill/widen outcomes, fixed advances, safe bounds, straight on-curve contours with no redundant points, metadata and line metrics, FontForge validity, and deterministic bytes in both formats.
+The tests assert all 94 drawn ASCII glyphs, all 67 declared empty controls and spaces, declared fill/widen outcomes, fixed advances, safe bounds, straight on-curve contours with no redundant points, metadata and line metrics, FontForge validity, and deterministic bytes in both formats.
 
 `GapRule` validation checks each recipe's declared `natural`, `minimum`, action, and `resolved` values; it does not run a generic post-outline gap detector. One-bit XBM checks preserve the Bold `g` tail aperture and require every non-space ASCII glyph to remain visually distinct at 14, 16, and 24 pixels. The test also rejects any active call to FontForge's stroke expansion.
 
-## Config-driven build and editor migration
+## Planned human-drawn source workflow
 
-Phases 1 through 3 are implemented. The strict `sources/config.py` evaluator loads the JSON project, resolves project and glyph references, expands generic filled primitives and reusable components, measures declared gaps, and applies one explicit `fill` or `widen` fallback. `.notdef` and every printable ASCII glyph now have JSON recipes, and all font-producing commands use them directly.
+The commands above still describe the current JSON pilot. That implementation remains available only until the first human-source cutover gate in the [development plan](Development%20Plan.md); no SFD source files exist yet.
 
-`mbfont edit` does not exist yet, so use the config-driven compile/check/specimen commands above until the editor reaches its parity gate.
+The approved target uses FontForge itself as the editor. Four native SFD files own the final outlines, components, anchors, guides, widths, and per-weight optical corrections. The repository does not add `mbfont edit` or another custom GUI.
 
-Check the JSON source contract without FontForge:
-
-~~~bash
-/usr/bin/python3 tests/test_config.py
-~~~
-
-It requires 283 target code points, 67 explicit empty code points, all 94 visible ASCII recipes, 122 pending drawn extended glyphs, valid guide resolution and gap outcomes in every weight, plus duplicate-key and cyclic-reference rejection. The FontForge end-to-end test separately checks the 161-entry current cmap, empty outlines, normalized contours, raster outcomes, and deterministic binaries.
-
-The pilot keeps one headless command grammar for local builds:
+At cutover, `compile`, `check`, and `specimen` keep their useful roles but change inputs:
 
 ~~~text
-mbfont compile [X.Y.Z] [--config FILE] [--out DIR] [--format ttf woff2]
-mbfont check [X.Y.Z] [--config FILE] [--out DIR] [--format ttf woff2]
+FontForge SFD sources -> validate without changing contours -> TTF / WOFF2 / specimen
 ~~~
 
-`--config` defaults to `sources/font.json`; omitting it uses the pilot project. Both commands load the same JSON project and call the same Python compiler that the editor will use. Downstream builds do not require a browser, JavaScript, Rust, Node.js, or an editor dependency.
+The build may set the requested version and deterministic serialization metadata. It must not generate, interpolate, thicken, simplify, remove overlap, fill gaps, or save changes into the SFD files. A source problem fails with its weight and glyph so the author can correct the outline in FontForge.
 
-This grammar does not make the generated artifacts backward-compatible. The pilot emits the temporary `MamboFontPilot-*` family, while MamboSite deliberately remains pinned to the older provider revision that emits `MamboFont-*` version `0.2.4` files. Coordinate provider and consumer changes only when the pilot graduates to a usable release.
+The target authoring loop is:
 
-The only new authoring command is planned as:
+1. Open the relevant `sources/MamboFont-<Style>.sfd` file in FontForge.
+2. Edit contours, components, anchors, metrics, and guides directly; save the SFD source.
+3. Run `compile` for all four weights and regenerate `specimen.html`.
+4. Review full-size shapes and 14-, 16-, and 24-pixel text across all weights.
+5. Run the build test and `check`, then review the SFD and specimen changes together.
 
-~~~text
-mbfont edit [--config FILE]
-~~~
+Regular and Bold may be used for one explicit interpolation experiment to seed Medium and SemiBold. Any result becomes an independent manually corrected SFD; ordinary builds never interpolate.
 
-It will start a loopback-only local server and open the browser editor. Its Build action invokes the same compile operation rather than maintaining a second geometry implementation.
+The JSON generator, its per-glyph recipes, and JSON-specific tests move together into `archive/v0.4-json-prototype/` only when the SFD sources reproduce the current cmap, advances, empty glyphs, metrics, metadata, and deterministic export behavior. Until that atomic checkpoint, the current commands and tests remain authoritative.
 
-### Authoring workflow after migration
-
-1. Codex adds the requested Unicode entries under `sources/glyphs/`, reuses components, and extends the small generic primitive vocabulary only when an existing primitive cannot express the character.
-2. The loader resolves every new glyph in all four weights and rejects incomplete coverage, invalid references, unsupported shapes, broken gaps, or invalid final contours.
-3. Open `mbfont edit`, filter to draft or changed glyphs, and inspect the source geometry, optimized outline, gap outcomes, and 14-, 16-, and 24-pixel previews in every weight.
-4. Drag named points or guides, enter exact values, change allowed primitive parameters, and select the declared `fill` or `widen` fallback for vulnerable gaps. The final generated TrueType vertices are never edited as source.
-5. A valid working edit compiles a temporary WOFF2 preview. The typable specimen switches to that revision without reloading the page; an invalid edit leaves the last valid preview active and displays the error.
-6. Save validates the complete project, then atomically rewrites only the selected stable, two-space-indented JSON file. Preview files remain temporary and ignored.
-7. Build TTF and WOFF2, run the end-to-end test and `check`, inspect the JSON and documentation diff, then commit the source rather than preview output.
-
-### Migration sequence
-
-1. **Complete:** establish the strict versioned JSON manifest and resolver, preserve the current source commit as the behavior baseline, and record controls and spaces as explicit empty coverage.
-2. **Complete:** translate `.notdef`, `7`, `A`, `H`, `M`, `O`, and `a`, covering bars, diagonals, cuts, components, joins, and both gap actions; require matching source geometry and normalized contours in all four weights.
-3. **Complete:** translate all printable ASCII into JSON, prove normalized contour parity in every weight, switch `compile`, `check`, and `specimen`, encode the configured empty controls and spaces, then remove glyph-specific Python recipes.
-4. Add the editor first as a read-only geometry and live-font viewer, then add point, guide, primitive, gap-rule, undo, and atomic-save operations.
-5. Match the current specimen's glyph grid, weights, sizes, optimized-point display, gap diagnostics, and ambiguity strings. Only after that gate, remove the tracked `specimen.html` and the `specimen` command; the editor's typable box becomes the review surface.
-6. Expand Latin-1 and the printable Windows-1252 set through new JSON glyph and component files, then use the editor for the human tuning pass.
-7. Produce a usable 283-entry candidate, including 216 drawn glyphs and 67 deliberate empty glyphs. Release and MamboWiki work remain separate later decisions.
+The command grammar does not make pilot artifacts backward-compatible. MamboSite deliberately remains pinned to the released `0.2.4` provider and its `MamboFont-*` files. Provider and consumer changes occur only after the complete human-drawn family passes the release gate.
 
 ## Documentation
 
