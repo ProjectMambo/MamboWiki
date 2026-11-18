@@ -25,6 +25,7 @@ Project Mambo needs one public, navigable home for the canonical documentation t
 |---|---|
 | Read the canonical Wiki documentation | [projectmambo.org/mambowiki/](https://projectmambo.org/mambowiki/) |
 | Review the synchronized site entry | [docs/index.md](docs/index.md) |
+| Follow maintenance, validation, deployment, and recovery stages | [Development plan](docs/_mounts/mambowiki/Development%20Plan.md) |
 | Synchronize canonical content | [Content workflow](docs/_mounts/mambowiki/Content%20Workflow.md) |
 | Validate and deploy the site | [Build and deployment](docs/_mounts/mambowiki/Build%20and%20Deployment.md) |
 | Inspect route and build configuration | [mambo.toml](mambo.toml) |
