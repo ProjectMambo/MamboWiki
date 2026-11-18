@@ -12,7 +12,7 @@ data:
   githubUrl: https://github.com/ProjectMambo/MamboFolio
 ---
 
-::page{layout="project" width="normal"}
+::page{layout="project" width="normal" sidebar=true}
 
 # MamboFolio
 
@@ -22,9 +22,13 @@ MamboFolio is the personal portfolio for Solomon Koh and Project Mambo. It publi
 
 ## How it works
 
-Project Mambo's documentation sync exports the canonical portfolio pages and media from the Obsidian vault into MamboFolio's `docs/` tree. [MamboSite](/mambosite/) then validates and compiles that tree, generates typed site data and assets, and drives a thin Next.js static export deployed through GitHub Pages.
+Project Mambo's documentation sync exports the canonical portfolio pages and media from the Obsidian vault into MamboFolio's `docs/` tree. [MamboSite](https://projectmambo.org/mambosite/) then validates and compiles that tree, generates typed site data and assets, and drives a thin Next.js static export deployed through GitHub Pages.
 
 The repository contains the site configuration and rendering shell; MamboSite supplies the shared compiler, React runtime, default component registry, and theme contract.
+
+## Documentation
+
+::children{view="list" sort="order" direction="asc" show=["title","description"]}
 
 ## Links
 
