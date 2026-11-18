@@ -58,7 +58,7 @@ Exit gate: the canonical diff tells one reviewable story, every referenced asset
 
 Run the targeted canonical export for MamboFolio and MamboWiki. Review every generated addition, change, and deletion because synchronization replaces complete owned trees. Keep authored content changes separate in the commit message when they are distinct from plan or provider maintenance.
 
-Run `npm run content:check` while iterating and `npm run check` before delivery. The full gate validates the MamboDocs contract, builds provider packages and generated content, runs lint and type checking, creates two reproducible static exports, checks `out/index.html`, and rejects whitespace errors. Preview the output and inspect the home page, changed route, representative project or article, media, navigation, deep links, not-found page, narrow and wide layouts, keyboard focus, contrast, and reduced motion.
+Run `npm run content:check` while iterating and `npm run check` before delivery. The full gate validates the MamboDocs contract, builds provider packages and generated content, runs lint and type checking, creates a reproducible static export, checks `out/index.html`, and rejects whitespace errors. Preview the output and inspect the home page, changed route, representative project or article, media, navigation, deep links, not-found page, narrow and wide layouts, keyboard focus, contrast, and reduced motion.
 
 Exit gate: the synchronized snapshot contains only intended canonical changes, the complete gate passes from the documented provider revisions, and the reviewed static artifact renders every affected journey without an accessibility or privacy regression.
 
